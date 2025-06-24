@@ -287,3 +287,21 @@ In the CLI, run the following script to start the server:
 ```bash
 npm run dev
 ```
+
+#### Common Issue
+
+If you encounter an issue similar to the image shown below:
+
+![Syntax Error](/readme-images/commonjs-module-error.png)
+
+To fix this issue you should add:
+
+```json
+{
+    ...
+    type: "module"
+    ...
+}
+```
+
+to your `package.json` and restart the project.
