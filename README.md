@@ -299,7 +299,7 @@ To fix this issue you should add:
 ```json
 {
     ...
-    type: "module"
+    type: "module" // Add this
     ...
 }
 ```
