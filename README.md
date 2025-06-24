@@ -65,3 +65,225 @@ Once logged in:
 ```
 mongodb+srv://<dbusername>:<db_password>@cluster0.abcd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 ```
+
+## MongoDB Atlas Database Setup
+
+Before writing any code, let’s manually create your database and collection inside MongoDB Atlas. This will help you understand the structure of MongoDB documents and collections visually using the Atlas UI.
+
+MongoDB stores data in a structure like this:
+
+- **Database** -> contains Collections
+- **Collection** -> contains multiple Documents (each is like a JSON object)
+
+### 1. Creating a Database
+
+1. Go to your Atlas Cluster Dashboard and click on "Browse Collections".
+
+2. Click on "Create Database".
+
+- Database Name: `todoWorkshop`
+- Collection Name: `todos`
+
+3. Click "Create".
+
+### 2. Manually Inserting a Test Document
+
+1. Click into the `todos` collection.
+2. CLick "Insert Document" to add a sample entry:
+
+```json
+{
+  "title": "Sample Task",
+  "done": false,
+  "createdAt": { "$date": { "$numberLong": "1717754400000" } }
+}
+```
+
+3. Click on "Insert".
+
+> [!NOTE]
+> You can see how MongoDB stores your documents in JSON format.
+
+## Project Structure
+
+This is what our project structure will look like for this workshop.
+
+```
+todo-app/
+├── backend/
+│   ├── index.js
+│   ├── .env
+│   └── package.json
+├── frontend/
+│   └── index.html
+└── README.md
+```
+
+## Backend Setup
+
+### 1. Initialize the Express Server
+
+Open your CLI, input these comamnds:
+
+```bash
+mkdir backend
+cd backend
+npm init -y
+```
+
+This creates a new folder called `backend` and initializes it as a Node.js project with a default `package.json` file.
+
+### (Optional) Create `.gitignore` file
+
+If you are using github, it is best to create a `.gitignore` file to prevent committing large or sensitive files (e.g. `node_modules`)
+
+Inside `backend` folder, create a `.gitignore` file.
+
+Paste the following inside it:
+
+```.gitignore
+# Dependencies
+node_modules
+
+# yarn error logs
+yarn-error.log
+
+# Environment varibales
+.env*
+!.env*.example
+
+# Code coverage
+coverage
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install express mongodb dotenv cors
+npm install --save-dev nodemon
+```
+
+#### What each package does:
+
+- `express`: A fast, minimal web framework for building APIs.
+- `mongodb`: Official MongoDB driver to connect and interact with your database.
+- `dotenv`: Loads environment variables from a `.env` file so we can keep secrets (like connection strings) out of our code.
+- `cors`: Allows cross-origin requests so your frontend can talk to your backend.
+- `nodemon`: Simple monitor script to run our Express server in development mode.
+
+### 3. Update your package.json
+
+Add a `dev` script under `scripts`:
+
+```json
+"scripts": {
+  "dev": "nodemon index.js",
+  "test": "echo \"Error: no test specified\" && exit 1"
+}
+```
+
+### 4. Create Environment Configuration
+
+Create a `.env` file inside the backend folder to securely store your MongoDB connection string.
+
+Paste the following inside:
+
+```.env
+MONGODB_URI=mongodb+srv://<your_username>:<your_password>@cluster0.mongodb.net/?retryWrites=true&w=majority
+DB_NAME=todoWorkshop
+```
+
+- `MONGODB_URI`: how your app connects to the cloud database.
+- `DB_NAME`: Tells your app which database to use inside that cluster. We use our created `todoWorkshop` database.
+
+> [!NOTE]
+> Replace `<your_username>` and `<your_password>` with your actual MongoDB Atlas database user credentials.
+
+### 5. Create the Server
+
+In this section, we’ll build a simple Express server that connects to your MongoDB Atlas cluster and exposes CRUD endpoints for a Todo List.
+
+> [!NOTE]
+> All code and files inside this section will be contained inside the `backend` directory.
+
+1. Create a `index.js` file and paste the following code to import the required packages:
+
+- `express`
+- `cors`
+- `mongodb`
+- `dotenv`
+
+```javascript
+import express from 'express';
+import cors from 'cors';
+import { MongoClient, ServerApiVersion } from 'mongodb';
+import dotenv from 'dotenv';
+
+dotenv.config();
+```
+
+2. In the same file, paste the following code to initialize the Express app and load `.env` variables
+
+```javascript
+const app = express();
+const PORT = 3000;
+const uri = process.env.MONGODB_URI;
+const database = process.env.DB_NAME;
+
+app.use(cors());
+app.use(express.json());
+```
+
+#### Explanation:
+
+- `app.use(cors())`: Allows your frontend (running separately) to make requests.
+
+- `app.use(express.json())`: Allows you to send and receive JSON data in requests.
+
+3. Create a MongoDB Client
+
+```javascript
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+});
+```
+
+It uses the Atlas URI from your `.env` file to connect to the cloud database.
+
+4. Connect to MongoDB Atlas.
+
+```javascript
+let todosCollection;
+// Connect the client to the server
+await client
+  .connect()
+  .then(async () => {
+    // Start app at designated PORT
+    app.listen(PORT, () =>
+      console.log(`Server running at http://localhost:${PORT}`)
+    );
+
+    // Send a ping to confirm a successful connection
+    await client.db('admin').command({ ping: 1 });
+    console.log(
+      'Pinged your deployment. You successfully connected to MongoDB!'
+    );
+
+    // Create instance of our todoWorkshop database and todos collection
+    const db = client.db(database);
+    todosCollection = db.collection('todos');
+  })
+  .catch(console.error);
+```
+
+### 6. Testing the Server
+
+In the CLI, run the following script to start the server:
+
+```bash
+npm run dev
+```
