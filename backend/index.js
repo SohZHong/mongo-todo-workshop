@@ -1,5 +1,4 @@
 import express from 'express';
-const express = require('express');
 import cors from 'cors';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import dotenv from 'dotenv';
