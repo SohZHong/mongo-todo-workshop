@@ -1,15 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import { MongoClient, ServerApiVersion } from 'mongodb';
-require('dotenv').config();
+import dotenv from 'dotenv';
 
+dotenv.config();
 const app = express();
 const PORT = 3000;
+const uri = process.env.MONGODB_URI;
+const database = process.env.DB_NAME;
 
 app.use(cors());
 app.use(express.json());
-
-const client = new MongoClient(process.env.MONGODB_URI, {
+const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
@@ -34,11 +36,7 @@ await client
     );
 
     // Create instance of our todoWorkshop database and todos collection
-    const db = client.db(process.env.DB_NAME);
+    const db = client.db(database);
     todosCollection = db.collection('todos');
   })
-  .catch(console.error)
-  .finally(
-    // Ensures that the client will close when you finish/error
-    await client.close()
-  );
+  .catch(console.error);
