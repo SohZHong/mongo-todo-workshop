@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import dotenv from 'dotenv';
+import todoRoutes from './route/todos.js';
 
 dotenv.config();
 const app = express();
@@ -38,5 +39,7 @@ await client
     // Create instance of our todoWorkshop database and todos collection
     const db = client.db(database);
     todosCollection = db.collection('todos');
+
+    app.use('/todos', todoRoutes(todosCollection));
   })
   .catch(console.error);
