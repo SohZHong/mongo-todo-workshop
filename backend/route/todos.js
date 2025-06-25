@@ -1,4 +1,5 @@
 import express from 'express';
+import { ObjectId } from 'mongodb';
 
 export default function todoRoutes(todosCollection) {
   const router = express.Router();
@@ -23,15 +24,16 @@ export default function todoRoutes(todosCollection) {
   // PUT update todo
   router.put('/:id', async (req, res) => {
     const result = await todosCollection.updateOne(
-      { _id: req.params.id },
+      { _id: new ObjectId(req.params.id) },
       { $set: { done: req.body.done } }
     );
     res.json(result);
   });
 
+  // DELETE todo
   router.delete('/:id', async (req, res) => {
     const result = await todosCollection.deleteOne({
-      _id: req.params.id,
+      _id: new ObjectId(req.params.id),
     });
     res.json(result);
   });
