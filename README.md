@@ -455,6 +455,8 @@ router.delete('/:id', async (req, res) => {
 
 ## Frontend Integration with MongoDB
 
+We’ll now build a lightweight frontend using only HTML, JavaScript, and the Fetch API. This will allow users to interact with your Express + MongoDB backend.
+
 ### 1. Create a `frontend` directory and `index.html`
 
 The resulting structure will look like this:
@@ -468,4 +470,144 @@ backend/
 │   └── todos.js
 ```
 
-### 2.
+### 2. Starter Code
+
+Paste the following starter code:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Todo List (MongoDB)</title>
+  </head>
+  <body>
+    <h1>My Todo List</h1>
+
+    <input id="titleInput" placeholder="New task..." />
+    <button onclick="addTodo()">Add</button>
+
+    <ul id="todoList"></ul>
+  </body>
+</html>
+```
+
+#### Explanation
+
+This is a basic HTML page with:
+
+- A heading (`<h1>`)
+- An input box for new tasks
+- A button to submit new tasks
+- An empty list where tasks will appear
+
+### Add Simple Styling (Optional but Nice)
+
+Inside the `<head>`, insert this `<style>` block for basic spacing:
+
+```html
+<style>
+  body {
+    margin: 2rem auto;
+    max-width: 600px;
+    font-family: sans-serif;
+  }
+  li {
+    margin-bottom: 0.5rem;
+  }
+  button {
+    margin-left: 1rem;
+  }
+</style>
+```
+
+### 3. Add JavaScript Logic
+
+Paste this inside a `<script defer>` tag in the `<head>` section:
+
+```html
+<script defer>
+  const API = 'http://localhost:3000/todos';
+
+  async function fetchTodos() {
+    const res = await fetch(API);
+    const todos = await res.json();
+    const list = document.getElementById('todoList');
+    list.innerHTML = '';
+
+    todos.forEach((todo) => {
+      const li = document.createElement('li');
+      li.textContent = todo.title + (todo.done ? ' ✅' : '');
+      li.onclick = () => toggleDone(todo._id, !todo.done);
+
+      const done = document.createElement('button');
+      done.textContent = 'Done';
+      done.onclick = (e) => {
+        e.stopPropagation();
+        toggleDone(todo._id, !todo.done);
+      };
+
+      const del = document.createElement('button');
+      del.textContent = 'Del';
+      del.onclick = (e) => {
+        e.stopPropagation();
+        deleteTodo(todo._id);
+      };
+
+      li.appendChild(done);
+      li.appendChild(del);
+      list.appendChild(li);
+    });
+  }
+
+  async function addTodo() {
+    const title = document.getElementById('titleInput').value;
+    if (!title) return;
+
+    await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    });
+
+    document.getElementById('titleInput').value = '';
+    fetchTodos();
+  }
+
+  async function toggleDone(id, done) {
+    await fetch(`${API}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ done }),
+    });
+    fetchTodos();
+  }
+
+  async function deleteTodo(id) {
+    await fetch(`${API}/${id}`, { method: 'DELETE' });
+    fetchTodos();
+  }
+
+  fetchTodos();
+</script>
+```
+
+#### Explanation
+
+- `fetchTodos()`: Loads all todos from the backend and renders them as list items
+- `addTodo()`: Sends a new task to the server when the user clicks “Add”
+- `toggleDone()`: Toggles a task’s done status when clicked
+- `deleteTodo()`: Removes the task when the user clicks “Del”
+
+### 4. Open in Browser
+
+Just double-click `frontend/index.html` or drag it into a browser window.
+
+You should see:
+
+- An input field
+- An “Add” button
+- A growing list of todo items you can mark as "done" or "delete"
+
+> [!IMPORTANT]
+> Make sure your backend server is running on http://localhost:3000.
