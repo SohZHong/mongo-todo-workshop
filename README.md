@@ -288,6 +288,10 @@ In the CLI, run the following script to start the server:
 npm run dev
 ```
 
+Your server is running and connected if you see something like this in the CLI:
+
+![Server Start Successfully](/readme-images/server-start-success.png)
+
 #### Common Issue
 
 If you encounter an issue similar to the image shown below:
@@ -298,10 +302,170 @@ To fix this issue you should add:
 
 ```json
 {
-    ...
-    type: "module" // Add this
-    ...
+  "type": "module" // Add this
 }
 ```
 
 to your `package.json` and restart the project.
+
+## REST API Endpoints
+
+Now that your server is running and connected, let’s define each API route.
+
+### 1. Create a `routes/` directory and `todos.js`
+
+The resulting structure will look like this:
+
+```
+backend/
+├── index.js
+├── routes/
+│   └── todos.js
+```
+
+### 2. Create Router Handler
+
+This file will contain the CRUD API endpoints for managing todo items in MongoDB. It receives the `todosCollection` (a MongoDB collection object) and returns a configured router.
+
+Paste the following code into the `todos.js`:
+
+> [!NOTE]
+> Explanation can be found under the code snippet
+
+```javascript
+import express from 'express';
+import { ObjectId } from 'mongodb';
+
+export default function todoRoutes(todosCollection) {
+  const router = express.Router();
+
+  // GET all todos
+  router.get('/', async (req, res) => {
+    const todos = await todosCollection.find().toArray();
+    res.json(todos);
+  });
+
+  // POST new todos
+  router.post('/', async (req, res) => {
+    const newTodo = {
+      title: req.body.title,
+      done: false,
+      createdAt: new Date(),
+    };
+    const result = await todosCollection.insertOne(newTodo);
+    res.json(result);
+  });
+
+  // PUT update todo
+  router.put('/:id', async (req, res) => {
+    const result = await todosCollection.updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: { done: req.body.done } }
+    );
+    res.json(result);
+  });
+
+  // DELETE todo
+  router.delete('/:id', async (req, res) => {
+    const result = await todosCollection.deleteOne({
+      _id: new ObjectId(req.params.id),
+    });
+    res.json(result);
+  });
+
+  return router;
+}
+```
+
+#### Explanation
+
+**1. GET / – Fetch All Todos**
+
+```javascript
+router.get('/', async (req, res) => {
+  const todos = await todosCollection.find().toArray();
+  res.json(todos);
+});
+```
+
+- Fetches all todo documents from the todos collection.
+- Converts the result into an array using .toArray().
+- Returns the data as a JSON array in the response.
+
+**2. POST / – Create a New Todo**
+
+```javascript
+router.post('/', async (req, res) => {
+  const newTodo = {
+    title: req.body.title,
+    done: false,
+    createdAt: new Date(),
+  };
+  const result = await todosCollection.insertOne(newTodo);
+  res.json(result);
+});
+```
+
+- Receives a JSON body (from the frontend) with a `title` field.
+- Constructs a new todo document with default values:
+  - `done`: `false`
+  - `createdAt`: current timestamp
+- Inserts the new document into the collection using `insertOne()`.
+- Returns the result (including the inserted ID).
+
+**3. PUT /:id – Update Todo Status**
+
+```javascript
+router.put('/:id', async (req, res) => {
+  const result = await todosCollection.updateOne(
+    { _id: new ObjectId(req.params.id) },
+    { $set: { done: req.body.done } }
+  );
+  res.json(result);
+});
+```
+
+- Extracts the document ID from the URL and converts it to a MongoDB `ObjectId`.
+- Updates the `done` field of that specific document using `$set`.
+- Returns the result (number of modified documents, etc.).
+
+**4. DELETE /:id – Delete a Todos**
+
+```javascript
+router.delete('/:id', async (req, res) => {
+  const result = await todosCollection.deleteOne({
+    _id: new ObjectId(req.params.id),
+  });
+  res.json(result);
+});
+```
+
+- Reads the document ID from the URL and converts it into an `ObjectId`.
+- Removes the matching document using `deleteOne()`.
+- Sends back the result, showing if a document was deleted.
+
+#### Summary
+
+| Method | Endpoint     | Purpose              |
+| ------ | ------------ | -------------------- |
+| GET    | `/todos`     | Fetch all todos      |
+| POST   | `/todos`     | Create a new todo    |
+| PUT    | `/todos/:id` | Update a todo status |
+| DELETE | `/todos/:id` | Delete a todo        |
+
+## Frontend Integration with MongoDB
+
+### 1. Create a `frontend` directory and `index.html`
+
+The resulting structure will look like this:
+
+```
+frontend/
+├── index.html << Newly added file
+backend/
+├── index.js
+├── routes/
+│   └── todos.js
+```
+
+### 2.
